@@ -10,8 +10,8 @@
 
 const RE = {
   // Top-level declarations (column 0)
-  struct: /^struct\s+(\w+)(\[[^\]]+\])?(?:\(([^)]+)\))?:/,
-  trait: /^trait\s+(\w+)(\[[^\]]+\])?(?:\(([^)]+)\))?:/,
+  struct: /^struct\s+(\w+)(\[.+?\])?(?:\(([^)]+)\))?:/,
+  trait: /^trait\s+(\w+)(\[.+?\])?(?:\(([^)]+)\))?:/,
   comptime: /^comptime\s+(\w+)(?::\s*(\w+))?\s*=\s*(.+)/,
   alias: /^alias\s+(\w+)(?::\s*(\w+))?\s*=\s*(.+)/,
   importFrom: /^from\s+(\S+)\s+import\s+(.+)/,
