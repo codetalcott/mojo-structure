@@ -25,7 +25,7 @@ function collectMojoFiles(target) {
   const files = [];
   function walk(dir) {
     for (const entry of readdirSync(dir)) {
-      if (entry === "__pycache__" || entry === ".git" || entry === "build" || entry === "node_modules") continue;
+      if (entry === "__pycache__" || entry === ".git" || entry === "build" || entry === "node_modules" || entry === ".agents") continue;
       const full = join(dir, entry);
       const s = statSync(full);
       if (s.isDirectory()) walk(full);

@@ -17,6 +17,11 @@ export function formatSkeleton(parsed) {
   }
   if (parsed.imports.length) out.push("");
 
+  for (const v of parsed.vars) {
+    out.push(`var ${v.name}: ${v.type}`);
+  }
+  if (parsed.vars.length) out.push("");
+
   for (const ct of parsed.comptimes) {
     const typeAnno = ct.type ? `: ${ct.type}` : "";
     out.push(`comptime ${ct.name}${typeAnno} = ${ct.value}`);
@@ -24,29 +29,11 @@ export function formatSkeleton(parsed) {
   if (parsed.comptimes.length) out.push("");
 
   for (const t of parsed.traits) {
-    const traits = t.traits.length ? `(${t.traits.join(", ")})` : "";
-    const tp = t.type_params || "";
-    for (const d of t.decorators) out.push(d);
-    out.push(`trait ${t.name}${tp}${traits}:`);
-    for (const m of t.methods) {
-      out.push(formatMethodSig(m, "    ") + " ...");
-    }
-    out.push("");
+    formatStructOrTrait(out, t, "trait", "");
   }
 
   for (const s of parsed.structs) {
-    const traits = s.traits.length ? `(${s.traits.join(", ")})` : "";
-    const tp = s.type_params || "";
-    for (const d of s.decorators) out.push(d);
-    out.push(`struct ${s.name}${tp}${traits}:`);
-    for (const f of s.fields) {
-      out.push(`    var ${f.name}: ${f.type}`);
-    }
-    if (s.fields.length && s.methods.length) out.push("");
-    for (const m of s.methods) {
-      out.push(formatMethodSig(m, "    ") + " ...");
-    }
-    out.push("");
+    formatStructOrTrait(out, s, "struct", "");
   }
 
   for (const f of parsed.functions) {
@@ -58,10 +45,33 @@ export function formatSkeleton(parsed) {
 }
 
 /**
+ * Format a struct or trait declaration, including nested structs.
+ */
+function formatStructOrTrait(out, s, keyword, outerIndent) {
+  const indent = outerIndent + "    ";
+  const traits = s.traits.length ? `(${s.traits.join(", ")})` : "";
+  const tp = s.type_params || "";
+  for (const d of s.decorators) out.push(outerIndent + d);
+  out.push(`${outerIndent}${keyword} ${s.name}${tp}${traits}:`);
+  for (const f of s.fields) {
+    out.push(`${indent}var ${f.name}: ${f.type}`);
+  }
+  if (s.fields.length && (s.methods.length || s.structs.length)) out.push("");
+  for (const nested of s.structs) {
+    formatStructOrTrait(out, nested, "struct", indent);
+  }
+  for (const m of s.methods) {
+    out.push(formatMethodSig(m, indent) + " ...");
+  }
+  out.push("");
+}
+
+/**
  * Render one-line-per-file summary with counts.
  */
 export function formatSummary(parsed) {
   const parts = [];
+  if (parsed.vars.length) parts.push(`${parsed.vars.length} vars`);
   if (parsed.structs.length) parts.push(`${parsed.structs.length} structs`);
   if (parsed.traits.length) parts.push(`${parsed.traits.length} traits`);
   if (parsed.functions.length) parts.push(`${parsed.functions.length} functions`);

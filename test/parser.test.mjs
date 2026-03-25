@@ -448,6 +448,134 @@ describe("parseFile — python_interop.mojo (Python interop skill patterns)", ()
   });
 });
 
+// ── advanced.mojo (nested structs, comptime if, module-level var) ────────
+
+describe("parseFile — advanced.mojo (nested structs, comptime if, vars)", () => {
+  const result = parseFile("advanced.mojo", fixture("advanced.mojo"));
+
+  // ── Module-level var ──
+
+  it("extracts module-level var declarations", () => {
+    assert.equal(result.vars.length, 2);
+    assert.equal(result.vars[0].name, "global_count");
+    assert.equal(result.vars[0].type, "Int");
+    assert.equal(result.vars[1].name, "_registry");
+    assert.equal(result.vars[1].type, "Dict[String, Int]");
+  });
+
+  it("strips initializer from var type", () => {
+    // `var _registry: Dict[String, Int] = Dict[String, Int]()`
+    // type should be just `Dict[String, Int]`, not include `= ...`
+    assert.ok(!result.vars[1].type.includes("="));
+  });
+
+  // ── Nested structs ──
+
+  it("extracts nested struct with fields and methods", () => {
+    const outer = result.structs.find((s) => s.name === "Outer");
+    assert.ok(outer);
+    assert.equal(outer.fields.length, 1);
+    assert.equal(outer.fields[0].name, "x");
+    assert.equal(outer.structs.length, 1);
+
+    const inner = outer.structs[0];
+    assert.equal(inner.name, "Inner");
+    assert.equal(inner.fields.length, 1);
+    assert.equal(inner.fields[0].name, "y");
+    assert.equal(inner.fields[0].type, "Int");
+    assert.equal(inner.methods.length, 2);
+    assert.ok(inner.methods.find((m) => m.name === "__init__"));
+    assert.ok(inner.methods.find((m) => m.name === "get"));
+  });
+
+  it("keeps parent methods separate from nested struct methods", () => {
+    const outer = result.structs.find((s) => s.name === "Outer");
+    assert.equal(outer.methods.length, 2);
+    assert.ok(outer.methods.find((m) => m.name === "__init__"));
+    assert.ok(outer.methods.find((m) => m.name === "get_inner"));
+  });
+
+  it("extracts multiple sibling nested structs", () => {
+    const tree = result.structs.find((s) => s.name === "Tree");
+    assert.ok(tree);
+    assert.equal(tree.structs.length, 2);
+
+    const node = tree.structs.find((s) => s.name === "Node");
+    assert.ok(node);
+    assert.equal(node.fields.length, 2);
+    assert.equal(node.fields[0].name, "left");
+
+    const leaf = tree.structs.find((s) => s.name === "Leaf");
+    assert.ok(leaf);
+    assert.equal(leaf.fields.length, 1);
+    assert.equal(leaf.fields[0].name, "data");
+    assert.equal(leaf.methods.length, 1);
+  });
+
+  // ── comptime if ──
+
+  it("extracts structs from all comptime if branches", () => {
+    const neon = result.structs.find((s) => s.name === "NeonVector");
+    assert.ok(neon);
+    assert.equal(neon.fields.length, 1);
+    assert.equal(neon.fields[0].type, "SIMD[DType.float32, 4]");
+    assert.equal(neon.methods.length, 1);
+
+    const amd = result.structs.find((s) => s.name === "AmdVector");
+    assert.ok(amd);
+    assert.equal(amd.fields.length, 1);
+
+    const fallback = result.structs.find((s) => s.name === "FallbackVector");
+    assert.ok(fallback);
+    assert.equal(fallback.fields.length, 1);
+    assert.equal(fallback.fields[0].type, "List[Float32]");
+    assert.equal(fallback.methods.length, 1);
+  });
+
+  it("extracts free functions from comptime if branches", () => {
+    const neonAdd = result.functions.find((f) => f.name === "neon_add");
+    assert.ok(neonAdd);
+    assert.equal(neonAdd.params.length, 2);
+    assert.equal(neonAdd.returns, "NeonVector");
+  });
+
+  // ── @parameter if (old syntax) ──
+
+  it("extracts declarations from @parameter if blocks", () => {
+    const ct = result.comptimes.find((c) => c.name === "OLD_PARAM_VALUE");
+    assert.ok(ct);
+    assert.equal(ct.value, "42");
+
+    const fn = result.functions.find((f) => f.name === "param_guarded_fn");
+    assert.ok(fn);
+    assert.equal(fn.returns, "Int");
+  });
+});
+
+// ── formatSkeleton with new features ────────────────────────────────────
+
+describe("formatSkeleton — advanced features", () => {
+  const result = parseFile("advanced.mojo", fixture("advanced.mojo"));
+  const skeleton = formatSkeleton(result);
+
+  it("renders module-level vars", () => {
+    assert.ok(skeleton.includes("var global_count: Int"));
+    assert.ok(skeleton.includes("var _registry: Dict[String, Int]"));
+  });
+
+  it("renders nested structs with proper indentation", () => {
+    assert.ok(skeleton.includes("struct Outer:"));
+    assert.ok(skeleton.includes("    struct Inner:"));
+    assert.ok(skeleton.includes("        var y: Int"));
+    assert.ok(skeleton.includes("        def get(self) -> Int: ..."));
+  });
+
+  it("renders comptime if structs as top-level", () => {
+    assert.ok(skeleton.includes("struct NeonVector:"));
+    assert.ok(skeleton.includes("    var data: SIMD[DType.float32, 4]"));
+  });
+});
+
 describe("formatSkeleton", () => {
   const result = parseFile("basic.mojo", fixture("basic.mojo"));
   const skeleton = formatSkeleton(result);

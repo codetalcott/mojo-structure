@@ -42,10 +42,14 @@ Line-by-line regex parser using indentation for scope. No AST library dependenci
 - `comptime` (current) and `alias` (legacy) constant declarations
 - `@staticmethod`, `@export(...)`, and other decorators
 - Multi-line parameter lists with nested brackets
-- `raises` modifier
-- Type parameters (`[T: AnyType]`)
-- `##` doc comments and `"""` docstrings
-- `mut`, `out`, `deinit` parameter modifiers
+- Parametric structs/traits (`[T: AnyType]`), multi-line trait lists
+- Nested structs, `comptime if`/`@parameter if` branches, module-level `var`
+- `raises` modifier, `##` doc comments, `"""` docstrings
+- `mut`, `out`, `deinit`, `ref`, `var` parameter modifiers
+
+### Legacy syntax policy
+
+We support `fn` and `alias` because real codebases are mid-transition. Other removed syntax (`inout`, `owned`, `@value`, `let`, etc.) either lives inside bodies we skip or parses naturally as raw strings in parameter positions. Don't add new special handling for patterns the language is removing.
 
 ## Development workflow
 
