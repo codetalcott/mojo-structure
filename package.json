@@ -1,0 +1,26 @@
+{
+  "name": "mojo-structure",
+  "version": "0.1.0",
+  "description": "Lightweight Mojo structure extractor — parse .mojo files into structural summaries for AI context generation",
+  "type": "module",
+  "main": "src/index.mjs",
+  "bin": {
+    "mojo-structure": "src/cli.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "keywords": [
+    "mojo",
+    "parser",
+    "ast",
+    "structure",
+    "ai",
+    "llm",
+    "context"
+  ],
+  "license": "MIT",
+  "files": [
+    "src/"
+  ]
+}
