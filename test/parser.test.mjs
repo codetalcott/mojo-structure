@@ -14,12 +14,18 @@ describe("parseFile — basic.mojo", () => {
   const result = parseFile("basic.mojo", fixture("basic.mojo"));
 
   it("extracts imports including multi-line parens", () => {
-    assert.equal(result.imports.length, 3);
+    assert.equal(result.imports.length, 4);
     assert.equal(result.imports[0].module, "std.ffi");
     assert.deepEqual(result.imports[0].names, ["OwnedDLHandle"]);
     assert.equal(result.imports[2].module, "std.collections");
     assert.ok(result.imports[2].names.includes("Optional"));
     assert.ok(result.imports[2].names.includes("List"));
+  });
+
+  it("extracts 3+ line multi-line imports", () => {
+    const utils = result.imports.find((i) => i.module === "std.utils");
+    assert.ok(utils);
+    assert.deepEqual(utils.names, ["Alpha", "Beta", "Gamma"]);
   });
 
   it("extracts comptime and alias declarations", () => {
@@ -110,6 +116,15 @@ describe("parseFile — basic.mojo", () => {
     assert.equal(ml.params.length, 3);
     assert.equal(ml.raises, true);
     assert.equal(ml.returns, "String");
+  });
+
+  it("handles nested parens in parameter types", () => {
+    const np = result.functions.find((f) => f.name === "nested_paren_types");
+    assert.ok(np);
+    assert.equal(np.params.length, 2);
+    assert.equal(np.params[0].type, "Tuple(Int, Int)");
+    assert.equal(np.params[1].type, "fn(String) -> Bool");
+    assert.equal(np.returns, "Bool");
   });
 
   it("extracts struct doc comments", () => {

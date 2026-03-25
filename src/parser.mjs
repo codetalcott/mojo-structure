@@ -92,9 +92,10 @@ export function parseFile(filepath, source) {
     if (impFrom) {
       let names = impFrom[2];
       if (names.includes("(") && !names.includes(")")) {
-        while (i + 1 < lines.length && !lines[i].includes(")")) {
+        while (i + 1 < lines.length) {
           i++;
           names += " " + lines[i].trim();
+          if (names.includes(")")) break;
         }
       }
       names = names.replace(/[()]/g, "").trim();
@@ -483,7 +484,7 @@ function collectStructOrTraitHeader(lines, i, keyword) {
 function matchSignature(text) {
   // Supports both `def` and `fn` (older Mojo)
   const m = text.match(
-    /^(?:def|fn)\s+(\w+)(\[.*?\])?\(([^)]*)\)(?:\s*raises\s*)?(?:\s*->\s*(.+?))?$/,
+    /^(?:def|fn)\s+(\w+)(\[.*?\])?\((.*)\)(?:\s*raises\s*)?(?:\s*->\s*(.+?))?$/,
   );
   if (!m) return null;
   return {

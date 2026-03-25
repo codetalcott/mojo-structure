@@ -6,6 +6,11 @@ from std.collections import (
     Optional,
     List,
 )
+from std.utils import (
+    Alpha,
+    Beta,
+    Gamma,
+)
 
 comptime MyEnv = OpaquePointer[MutAnyOrigin]
 comptime MAX_SIZE: Int = 128
@@ -67,3 +72,6 @@ def multi_line_params(
     count: Int,
 ) raises -> String:
     return name
+
+def nested_paren_types(x: Tuple(Int, Int), cb: fn(String) -> Bool) -> Bool:
+    return True

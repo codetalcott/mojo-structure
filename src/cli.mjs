@@ -80,7 +80,16 @@ if (useStdin) {
   results = [parseFile("<stdin>", source)];
 } else {
   const target = args.find((a) => !a.startsWith("--")) || ".";
-  const files = collectMojoFiles(target);
+  let files;
+  try {
+    files = collectMojoFiles(target);
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      console.error(`Error: path not found: ${target}`);
+      process.exit(1);
+    }
+    throw err;
+  }
   if (files.length === 0) {
     console.error(`No .mojo files found in: ${target}`);
     process.exit(1);
