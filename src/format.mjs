@@ -56,7 +56,11 @@ function formatStructOrTrait(out, s, keyword, outerIndent) {
   for (const f of s.fields) {
     out.push(`${indent}var ${f.name}: ${f.type}`);
   }
-  if (s.fields.length && (s.methods.length || s.structs.length)) out.push("");
+  for (const ct of s.comptimes) {
+    const typeAnno = ct.type ? `: ${ct.type}` : "";
+    out.push(`${indent}comptime ${ct.name}${typeAnno} = ${ct.value}`);
+  }
+  if ((s.fields.length || s.comptimes.length) && (s.methods.length || s.structs.length)) out.push("");
   for (const nested of s.structs) {
     formatStructOrTrait(out, nested, "struct", indent);
   }

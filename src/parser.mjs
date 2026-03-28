@@ -139,10 +139,8 @@ export function parseFile(filepath, source) {
       continue;
     }
 
-    // ── comptime if / @parameter if — extract declarations from all branches ──
-    if (RE.comptimeIf.test(line) || RE.parameterIf.test(line)) {
-      // If @parameter, skip to the next line which should be `if ...:`
-      if (RE.parameterIf.test(line)) i++;
+    // ── comptime if — extract declarations from all branches ──
+    if (RE.comptimeIf.test(line)) {
       i = parseComptimeIf(lines, i, result);
       continue;
     }
@@ -507,9 +505,9 @@ function collectSignature(lines, i, indent = 0) {
   let text = line;
   let j = i + 1;
 
-  // If parens aren't closed, keep collecting
+  // If parens aren't closed, keep collecting (strip inline comments from continuation lines)
   while (countChar(text, "(") > countChar(text, ")") && j < lines.length) {
-    text += " " + lines[j].trim();
+    text += " " + lines[j].replace(/#(?!#).*$/, "").trim();
     j++;
   }
 
@@ -518,7 +516,7 @@ function collectSignature(lines, i, indent = 0) {
   let cleaned = text.replace(/:\s*\.\.\.\s*$/, "").replace(/:\s*$/, "");
   // Normalize `raises`
   cleaned = cleaned.replace(/\)\s*raises\s*/, ") raises ");
-  return { text: cleaned, nextBodyLine: hasEllipsis ? i + 1 : j, ellipsis: hasEllipsis };
+  return { text: cleaned, nextBodyLine: j, ellipsis: hasEllipsis };
 }
 
 function countChar(s, ch) {

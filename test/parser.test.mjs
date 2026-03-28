@@ -615,6 +615,30 @@ describe("formatSkeleton", () => {
   it("includes imports", () => {
     assert.ok(skeleton.includes("from std.ffi import OwnedDLHandle"));
   });
+
+  it("includes inner comptimes in structs", () => {
+    assert.ok(skeleton.includes("    comptime VERSION: Int = 1"));
+  });
+});
+
+describe("parseFile — inline comments in multi-line signatures", () => {
+  it("strips inline comments from continuation lines", () => {
+    const source = `def commented_params(
+    a: Int,  # first param
+    b: String,  # second param
+) -> Bool:
+    return True
+`;
+    const result = parseFile("inline_comments.mojo", source);
+    const fn = result.functions.find((f) => f.name === "commented_params");
+    assert.ok(fn);
+    assert.equal(fn.params.length, 2);
+    assert.equal(fn.params[0].name, "a");
+    assert.equal(fn.params[0].type, "Int");
+    assert.equal(fn.params[1].name, "b");
+    assert.equal(fn.params[1].type, "String");
+    assert.equal(fn.returns, "Bool");
+  });
 });
 
 describe("formatSummary", () => {
